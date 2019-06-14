@@ -9,10 +9,10 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-### Final Project Introduction
-#The purpose of this project (CYO) is to create an algorithm for recommending classes for users based on other programs they have completed and the scores they received. I will be using a subset of modified data to protect the actual users infomation. I will use the recommenderlab for making my recommendation and use different models to identify the best model with the lowest error acuracy.
+### Project Introduction
+The purpose of this project (CYO) is to create recommending of classes for past users based on courses they have previously completed. I will be using a subset of modified data to protect the actual users infomation. I will use the recommenderlab for making my recommendation and use different models to identify the best model with the lowest error accuracy.
 
-```{r load Libraries}
+```{r load Libraries, include=FALSE}
 if(!require(dplyr)) install.packages("dplyr", repos = "http://cran.us.r-project.org")
 if(!require(stringr)) install.packages("stringr", repos = "http://cran.us.r-project.org")
 if(!require(tidyverse)) install.packages("tidyverse", repos = "http://cran.us.r-project.org")
@@ -31,9 +31,11 @@ library(lubridate)
 library(recommenderlab)
 ```
 
-#Initial data variables
+```{r List of variables}
 
-# Get lastest data available from OSHA  
+```
+
+### Load data
 
 ```{r Load Data}
 
@@ -44,7 +46,7 @@ Student_data <- read.csv(file.path("OnlineStudentHistory.csv"))
 
 ```
 
-#Review structure and details of dataset  
+### Review structure and details of dataset  
 
 ```{r Review structure and details of dataset  }
 nrow(Student_data) #courses taking by students
@@ -53,13 +55,10 @@ names(Student_data) #column Names
 str(Student_data)  #structure of data
 summary(Student_data) #stats per columns
 class(Student_data) #dat.frame
-
-
 unique_studentIds<-unique(Student_data$StudentID) # get unique Student IDS
-       
 students <- sample(unique(Student_data$StudentID),100) # get small sample of data to explore
 
-student_matrix <- Student_data %>% 
+student_matrix <- Student_data %>% #create a matrix with StudentID, CourseID, Rating (grade average)
   select(StudentID,CourseID,Rating) %>%
   mutate(Rating = 1) %>%
   spread(CourseID, Rating) %>%
@@ -70,26 +69,33 @@ corner(student_matrix, c=12,r=12) #view data
 
 ```
 
-*Note: *
+*Note: Rating only range from 70 to 99, this may restrict be restrictive of my results.*
 
-
+### Visualize Initial data
 ```{r Plot Course Rating Counts}
 #Plot Course Rating Counts for the count of courses rated:  
 Student_data %>% 
-  dplyr::count(CourseID) %>% 
+  dplyr::count(CourseID) %>%
   ggplot(aes(n)) + 
   geom_histogram(bins = 30, color = "black") + 
   scale_x_log10() + 
   ggtitle("Course Rating Counts")  
 ```
+
+*Note It appears in my dataset that less than 100 students have taken 5 classes
+
 ```{r Plot Student Rating Counts}
 #Plot StudentData for the count of Student ratings:  
-Student_data %>% 
-  dplyr::count(StudentID) %>% 
-  ggplot(aes(n)) + 
+src <- Student_data %>% 
+  dplyr::count(StudentID) 
+
+src %>% ggplot(aes(n)) + 
   geom_histogram(bins = 30, color = "black") + 
   scale_x_log10() + 
-  ggtitle("Student Rating Counts")  
+  ggtitle("Student Rating Counts") 
+
+View(src)
+   
 ```
 
 
