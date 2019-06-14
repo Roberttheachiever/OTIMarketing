@@ -1,6 +1,8 @@
+
 ### Final Project Introduction
 #The purpose of this project (CYO) is to create an algorithm for recommending classes for users based on other programs they have completed and the scores they received. I will be using a subset of modified data to protect the actual users infomation. I will use the recommenderlab for making my recommendation and use different models to identify the best model with the lowest error acuracy.
 
+```{r load Libraries}
 if(!require(dplyr)) install.packages("dplyr", repos = "http://cran.us.r-project.org")
 if(!require(stringr)) install.packages("stringr", repos = "http://cran.us.r-project.org")
 if(!require(tidyverse)) install.packages("tidyverse", repos = "http://cran.us.r-project.org")
@@ -17,25 +19,35 @@ library(data.table)
 library(useful)
 library(lubridate)
 library(recommenderlab)
+```
 
 #Initial data variables
 
-# Get lastest data available from OSHA 
+# Get lastest data available from OSHA  
+
+```{r Load Data}
+
 if(!file.exists("OnlineStudentHistory.csv")){
     download.file("https://github.com/Roberttheachiever/OTIMarketing/OnlineStudentHistory.csv", destfile = "OnlineStudentHistory.csv")}
   
-Student_data <- read.csv(file.path("OnlineStudentHistory.csv"))
-#review structure of dataset
-nrow(Student_data)
-ncol(Student_data)
-names(Student_data)
-str(Student_data)
-summary(Student_data)
-class(Student_data)
+Student_data <- read.csv(file.path("OnlineStudentHistory.csv"))  
 
-unique_studentIds<-unique(Student_data$StudentID)
+```
+
+#Review structure and details of dataset  
+
+```{r Review structure and details of dataset  }
+nrow(Student_data) #courses taking by students
+ncol(Student_data)  #data columns
+names(Student_data) #column Names
+str(Student_data)  #structure of data
+summary(Student_data) #stats per columns
+class(Student_data) #dat.frame
+
+
+unique_studentIds<-unique(Student_data$StudentID) # get unique Student IDS
        
-students <- sample(unique(Student_data$StudentID),100)
+students <- sample(unique(Student_data$StudentID),100) # get small sample of data to explore
 
 student_matrix <- Student_data %>% 
   select(StudentID,CourseID,Rating) %>%
@@ -43,26 +55,35 @@ student_matrix <- Student_data %>%
   spread(CourseID, Rating) %>%
   as.matrix() 
 
-#student_matrix
+cat("Sample of Student Data\n\n")
+corner(student_matrix, c=12,r=12) #view data
 
-#Plot StudentData for the count of courses rated:  
+```
 
+*Note: *
+
+
+```{r Plot Course Rating Counts}
+#Plot Course Rating Counts for the count of courses rated:  
 Student_data %>% 
   dplyr::count(CourseID) %>% 
   ggplot(aes(n)) + 
   geom_histogram(bins = 30, color = "black") + 
   scale_x_log10() + 
   ggtitle("Course Rating Counts")  
-
+```
+```{r Plot Student Rating Counts}
 #Plot StudentData for the count of Student ratings:  
-
 Student_data %>% 
   dplyr::count(StudentID) %>% 
   ggplot(aes(n)) + 
   geom_histogram(bins = 30, color = "black") + 
   scale_x_log10() + 
   ggtitle("Student Rating Counts")  
+```
 
+
+```{r Plot Ratings Counts}
 #Plot StudentData for the count of ratings:  
 
 Student_data %>% 
@@ -72,26 +93,29 @@ Student_data %>%
   scale_x_log10() + 
   ggtitle("Ratings Counts")  
 
-summary(Student_data)  
-names(Student_data)
+```
 
 ### Preparing Data:   
-#Clean data remove Student that have only taking 1 course, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE}
+```{r Clean data remove Student that have only taking 1 course, include=FALSE}
 keep_StudentID <- Student_data %>%
   dplyr::count(StudentID) %>%
   filter(n > 1) %>%
   pull(StudentID)
 
 Student_data1 <- Student_data %>% filter(StudentID %in% keep_StudentID)  
-
 summary(Student_data1)  
 
-#Convert to realRatingMatrix
-#1. I used dcast.data.table to cast the data.frame as a table  
-#2. I used sprintf to convert MovieId's, and UserId's to chr  
-#3. I used corner to view a small sample of the data to verify conversion  
-#4. I then convert the data ta a matrix and then a realRatingMatrix  
+```
 
+
+
+####Convert to realRatingMatrix
+1. I used dcast.data.table to cast the data.frame as a table  
+2. I used sprintf to convert MovieId's, and UserId's to chr  
+3. I used corner to view a small sample of the data to verify conversion  
+4. I then convert the data ta a matrix and then a realRatingMatrix  
+
+```{r Convert to realRatingMatrix}
 Students_2 <- dcast(StudentID ~ CourseID, data = Student_data1, value.var = "Rating")
 dim(Students_2)
 class(Students_2)
@@ -116,51 +140,91 @@ class(Students_2)
 #convert to realRatingMatrix
 Students_3 <- as(Students_2 , "realRatingMatrix")  
 class(Students_3)  
-str(Students_3)  
+str(Students_3) 
 
-####Review the prepared dataset  
+```
+
+####Review the prepared dataset 
+
+```{r Review the prepared dataset }
 
 #Review ratings distribution
 hist(getRatings(Students_3), main = "Distribution of Ratings")
 
-#The Distribution of Ratings shows we have 10 different possible ratings from 70 to 100
+```
 
-##```{r Normalized Distribution of Ratings, echo=FALSE }
+#The Distribution of Ratings shows we have different possible ratings from 70 to 100
+  This data is based on the students who completed courses which reqires 70% which is apparent looking at the data.
+
+```{r Normalized Distribution of Ratings, echo=FALSE }
 hist(getRatings(normalize(Students_3)),breaks = 100,main = "Normalized Distribution of Ratings")  
 
-##```{r Visual image of distribution of first 500 users, echo=FALSE}
-image(Students_3[1:500,],main = "Visual image of distribution of first 500 users")  
+```
 
+*Data appears to be normalized*
+
+```{r Visual image of distribution of first 500 Students}
+
+##```{r Visual image of distribution of first 500 users, echo=FALSE}
+image(Students_3[1:500,],main = "Visual image of distribution of first 500 students")  
+
+```
+
+*It appears the scores are evenly disriputed*
+
+```{r Avg Ratings of Prepared data}
 ##```{r Avg Ratings of Prepared data, eval=FALSE, include=FALSE}
 boxplot(rowMeans(Students_3),main = "Avg Ratings of Prepared data")  
+```
 
+*No outliers appear to be found that may skew the results*
+
+```{r Dimisions of dataset to be used for models}
 model_data = Students_3
 #Create model data, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE}
 dim(model_data)
 
+```
+
+
+```{r Number of Rating remaining in Model Data }
 #Number of Rating remaining in Model Data  
 nratings(model_data)  
 
+```
+
 #### Model dataset Distribution of Ratings  
 
-#Plot the Model Data Course ratings
+#Plot the Model Data Course ratings  
+
+```{r }
 hist(getRatings(model_data), main = "Distribution of Ratings after removing Outliers")   
 
-#*Note rating of 70 is the most popular.*
+```
+
+*Note rating are fair even with the exception of 70 which appear could be given by instructor to pass a student.*
+
   
-#image of prepared model dataset, echo=FALSE}
+```{r image of prepared model dataset, echo=FALSE}
 image(as(model_data,"matrix"), main = "Visual image of Rating distribution - Model Data")  
 
-#*Note Prepared Model data appears to be well ditributed. *
+```
+
+*Note Prepared Model ratings data appears slightly skewed. *
   
-#  Analyze number of course ratings per user:
+#Analyze number of course ratings per student:
+
+```{r Analyze number of course ratings per student}
 table(rowCounts(model_data)) 
 
-#*Note that 11619 have rated 2 classes, we have a few Outlier who have rated 6 classes, will keep for now performance ihas not been a issue
+```
+
+*Note that 11619 have rated 2 classes, we have a few Outlier who have rated 6 classes, will keep for now performance ihas not been a issue*
   
 #### Create Modeling datasets  
 
-#Create recommender sets, message=FALSE, warning=FALSE, include=FALSE, paged.print=FALSE}
+```{r Create recommender sets}
+
 set.seed(1)
 which_train <- sample( x = c(TRUE, FALSE), size = nrow(model_data), replace = TRUE, prob = c(0.8, 0.2))
 head(which_train)
@@ -171,134 +235,200 @@ rec_data_test <- model_data[!which_train]
 dim(rec_data_train)
 dim(rec_data_test)  
 
+```
 
 #### Build Models Options 
 
-#Get list of recommender models available
+```{r Get list of recommender models available}
+
 recommender_models <-recommenderRegistry$get_entries(dataType = "realRatingMatrix")  
 
-#show model details, eval=FALSE, include=FALSE}
+```
+
+```{r #show model details, eval=FALSE, include=FALSE}
 lapply(recommender_models,"[[","description")   
 recommender_models  #Description, references and parameteres of models
 
-#I will use various models then compare prediction accuracies to determine the best algorithim. The available models I will first use a user-based collaborative filtering algorithm (UBCF), then item-based collaborative filtering (IBCF) and item popularity algorithms (POPULAR).
+```
+
+I will use various models then compare prediction accuracies to determine the best algorithim. The available models I will first use a user-based collaborative filtering algorithm (UBCF), then item-based collaborative filtering (IBCF) and item popularity algorithms (POPULAR).
 
 #### User Based Collborative Filtering (UBCF) Model
 #Collaborative filtering uses algorithims to filter users ratings to make personalized recommendations from similiar users (definition from whatis.techtarget.com/definition/collaborative-filtering).
 
-#Build User Based Collabrotive model
+```{r Build User Based Collabrotive model}
+
 ubcf_model <- Recommender(data = rec_data_train, method = "UBCF")  
 ubcf_model  
 
+```
+
 # Using the UBCF recommendations 
-# Get recommender test set, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE}
+
+```{r Get recommender test set}
+
 # note UBCF model is a lazy learner technic that must access all data in order to make a prediction
-n_recommended <- 10
+n_recommended <- 5
 ubcf_predicted <- predict(object = ubcf_model, newdata = rec_data_test, n = n_recommended)
 ubcf_list <- sapply(ubcf_predicted@items, function(x){colnames(model_data)[x]})
 
-#List of recommendation movies for test set users 7 thru 10: 
+```
+
+#List of recommendation courses for test set users 7 thru 10: 
+
+```{r List of recommendation}
+
 ubcf_list[7:10]  
 
+```
+
 #Total number of recommendations by users in test set  
+
+```{r Total number of recommendations by users}
+
 number_of_items = sort(unlist(lapply(ubcf_list, length)), decreasing = TRUE)
 
 table(number_of_items)
 
-#Note that 0, hmmm
+```
+
+*Note with UBCF with 5 recommendation we get back 16700 recommendations of 1 item.*
+*Note with UBCF with 10 recommendation we get back 33400 recommendations of 1 item.*
+*Note with UBCF with 20 recommendation Error when creating evaluator schemes 'Some observations have size<given!'*
 
 
 #### Create an evaluators scheme:
 
-items_to_keep <- 10
-rating_threshold <- 5
+```{r Create evaluator schemes}
+
+items_to_keep <- 2 #max 2 error other wise
+rating_threshold <- 50
 n_fold <- 5
 eval_sets <- evaluationScheme(data = model_data, method = "cross-validation", train 
                               = percentage_training, given = items_to_keep, goodRating = rating_threshold, k = n_fold)
 eval_sets  
 
+```
+
 #Create evaluation datasets using cross-validation method, keeping **`r items_to_keep`** items and **`r n_fold`** folds with rating threshold of **`r rating_threshold`**  using the recommenderLab evaluationScheme function.  
 
-#Get size of evaluation sets, echo=FALSE}
+```{r Get size of evaluation sets, echo=FALSE}
+
 size_sets <- sapply(eval_sets@runsTrain, length)   
 cat("Sizes of Evaluation Sets:\t", size_sets, "\n")   
 getData(eval_sets, "train")
 
-#3 sets will be used:
-#train = training set  
-#known = test set used to build recommendations   
-#unknown = test set to test the recommendations   
+```
 
-#Create UBCF Recommender 
-##```{r Evaluate UBCF known, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE}
+3 sets will be used:
+train = training set  
+known = test set used to build recommendations   
+unknown = test set to test the recommendations   
+
+#### Create UBCF Recommender  
+
+```{r Evaluate UBCF known, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE}
 model_to_evaluate <-"UBCF"
 model_paramenter <- NULL
 eval_recommender <- Recommender(data = getData(eval_sets, "train"), method = model_to_evaluate, parameter = model_paramenter)
 eval_recommender  
+```
 
-#Calculate the UBCF predictions for known test set  
-items_to_recommend <- 2
+
+Calculate the UBCF predictions for known test set:
+
+```{r Calculate the UBCF predictions for known test set}
+ 
+items_to_recommend <- 2 
 eval_prediction <- predict(object = eval_recommender, newdata = getData(eval_sets, "known"), n = items_to_recommend, type = "ratings")
 eval_prediction 
 
-#Calculate the prediction accuracy for each user in unknown test set :
-#  #```{r Calculate the prediction accuracy UBCF, message=FALSE, warning=FALSE, include=FALSE, paged.print=FALSE}
+```
+
+Calculate the prediction accuracy for each user in unknown test set:
+
+```{r Calculate the prediction accuracy UBCF, message=FALSE, warning=FALSE, include=FALSE, paged.print=FALSE}
 eval_accuracy <- calcPredictionAccuracy(x = eval_prediction, data = getData(eval_sets, "unknown"), byUser = TRUE)
 head(eval_accuracy)
 
-#Calculate the overall avgerages in unknown test set: 
+```
+
+Calculate the overall avgerages in unknown test set: 
+
+```{r Calculate the overall avgerages in unknown test set }
+
 apply(eval_accuracy,2,mean)
 
+```
+
 #Calculate the overall accuracy given in unknown test set:
+
+```{r Calculate the overall accuracy given in unknown test set}
   
 eval_accuracy <- calcPredictionAccuracy(x = eval_prediction, data = getData(eval_sets, "unknown"), byUser = FALSE)
 eval_accuracy
 
-#Note the overall RMSE and the accuracy are good.  
+```
 
-#Using a precicion recall plot to predict accuracy with confusion matrix for known test set  
+*Note the overall RMSE and the accuracy are good.  *
 
-##```{r Use prediction recall to predict accuarcy, message=FALSE, warning=FALSE, include=FALSE, paged.print=FALSE}
+Using a precicion recall plot to predict accuracy with confusion matrix for known test set:
+
+```{r Use prediction recall to predict accuarcy, message=FALSE, warning=FALSE, include=FALSE, paged.print=FALSE}
+
 results <- evaluate(x = eval_sets, method = model_to_evaluate, n = seq(10, 100, 10))   
 
-#Evaluate the result with confusion matrix   
+```
 
-##```{r Show Confusion Matrix, echo=FALSE}  
+Evaluate the result with confusion matrix   
+
+```{r Show Confusion Matrix, echo=FALSE}  
 
 head(getConfusionMatrix(results)[[1]])  
 
-# note first 4 columns cotain the True False Positives
+```
 
-#Sum up the UBCF TP, FP, FN, TN indexes and plot:  
+*note first 4 columns cotain the True False Positives*
+
+Sum up the UBCF TP, FP, FN, TN indexes and plot:  
   
-#sum up the indexes 
+```{r sum up the indexes }
 
 columns_to_sum <- c("TP","FP","FN","TN")  
 indicies_summed <- Reduce("+", getConfusionMatrix(results))[,columns_to_sum]  
-indicies_summed    
+indicies_summed  
 
-#*Note: it is difficult to visulize the data provided unless the results are plotted.*
-  #Create UBCF Receiver operating characteristic (ROC) plot  
+```
 
-##```{r Create UBCF ROC plot, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE}
+*Note: it is difficult to visulize the data provided unless the results are plotted.*
 
-plot(results, annotate = TRUE, main = "UBCF - ROC Curve")    
+Create UBCF Receiver operating characteristic (ROC) plot  
 
-#Note plot shows the relation ship between TPR and FPR  
-#At approx #35 the TPR is close to 0.7 and the FPR is Greater than.9 bad
+```{r Create UBCF ROC plot, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE}
 
-#Plot UBCF Precision/recall to verify accuracy
+plot(results, annotate = TRUE, main = "UBCF - ROC Curve")   
+
+```
+
+*Note plot shows the relation ship between TPR and FPR*
+*At approx #35 the TPR is close to 0.7 and the FPR is Greater than.9 bad*
+
+Plot UBCF Precision/recall to verify accuracy
+
+```{r lot UBCF Precision/recall to verify accuracy}
 
 plot(results, "prec/rec",annotate = 1, main = "UBCF - Precision/recall")   
 
-#Note the precision/recall at #10 is not the best at .002/0.61 
-#Note the precision/recall at #30 is not the best at .002/0.61 
+```
+
+*Note the precision/recall at #10 is not the best at .002/0.61 *
+*Note the precision/recall at #30 is not the best at .002/0.61 *
+
 
 #### Fine Tuning of the Models to get best results
-#Lets try different factors to see if we can get a better Precision Recall result.
-#Create UBCF Models with varing vector_nn and different methods i.e.: cosine and pearson.
-
-##```{r Fine tune UBCF model, message=FALSE, warning=FALSE, include=FALSE, paged.print=FALSE}
+Lets try different factors to see if we can get a better Precision Recall result.
+Create UBCF Models with varing vector_nn and different methods i.e.: cosine and pearson.
+```{r Fine tune UBCF model, message=FALSE, warning=FALSE, include=FALSE, paged.print=FALSE}
 vector_nn <- c(5,10,20, 30)
 UBCF_cos_model <- lapply(vector_nn, function(nn,l){ list(name ="UBCF", param = list(method = "cosine", nn = nn))})
 names(UBCF_cos_model) <- paste0("UBCF_cos_k_", vector_nn)
@@ -308,12 +438,11 @@ names(UBCF_pea_model) <- paste0("UBCF_pea_k_", vector_nn)
 names(UBCF_pea_model)[1]
 models <- append(UBCF_cos_model, UBCF_pea_model)
 models  
+```
 
-##```
+Determine the best UBCF results based on number of recommendations  
 
-#Determine the best UBCF results based on number of recommendations  
-
-##```{r Get UBCF results, include=FALSE}
+```{r Get UBCF results, include=FALSE}
 n_recommendations <- c(1, 5, seq(10,100,10))
 list_results <- evaluate(x = eval_sets, method = models, n = n_recommendations)  
 
@@ -452,7 +581,7 @@ corner(validation)
 #```
 #```{r Summary of validation, echo=FALSE}
 cat("Total number of ratings in validation dataset:\t", nratings(val_data),"\n")
-cat("      Total Users to Movies in validation set:\t", dim(val_data), "\n")   
+cat("      Total Students to Courses in validation set:\t", dim(val_data), "\n")   
 #```
 
 #```{r echo=TRUE}
@@ -484,9 +613,18 @@ head(getConfusionMatrix(POP_eval)[[1]])
 
 ### Conclusion
 
+#In conlusion the **POPULAR**  algorithm model from the recommenderLab library, keeping **30** items with a predicted movie rating of **4**  reports an RMSE of **0.860** which is lower RMSE than required. Although I though the content based filtering approach would have been the the best methods. Another huge take away fron this project is getting the data in the right format can vastly increase performance.
+#```{r File size reduction, echo=FALSE}
+cat("The Prepared dataset was reduced by", object.size(as(edx_3, "matrix"))/object.size(edx_3),"to 1 byte when converted from matrix to realRatingsMatrix which greatly reduced time, memory issues and stress.\n")
+
+#```
+#As a legacy programmer from the days of assemble language in the 70's,  this Data Science Class offered by Harvardx have given me new tools, toys and a different way to approach the future, Thank Rafael Irizarry
 
 ####References
 
 #Michael Hahsler (2019). recommenderlab: Lab for Developing and Testing Recommender Algorithms. R package version 0.2-4. https://github.com/mhahsler/recommenderlab
 
+
+
+```
 
