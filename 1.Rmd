@@ -349,7 +349,7 @@ Calculate the UBCF predictions for known test set:
 
 ```{r Calculate the UBCF predictions for known test set}
  
-items_to_recommend <- 2 
+items_to_recommend <- 5 
 eval_prediction <- predict(object = eval_recommender, newdata = getData(eval_sets, "known"), n = items_to_recommend, type = "ratings")
 eval_prediction 
 
@@ -456,30 +456,31 @@ Determine the best UBCF results based on number of recommendations
 n_recommendations <- c(1, 5, seq(10,100,10))
 list_results <- evaluate(x = eval_sets, method = models, n = n_recommendations)  
 
-###```
+```
 
 #Plot UBCF Models with varing vector_nn and different methods results
 
-##```{r plot UBCF model results, echo=FALSE}
+```{r plot UBCF model results, echo=FALSE}
 plot(list_results, annotate = c (1,2), legend = "bottomright")
 title("UBCF ROC curve")  
 
-###```
+```
 
-#*Note: UBCF_pea_k_30 appears to be the best UBCF model with TPR closes to 0.7 and FPR less than 0.4*
-  
-  ##```{r echo=FALSE}
+*Note: UBCF_pea_k_30 appears to be the best UBCF model with TPR closes to 0.7 and FPR less than 0.4*
+
+```{r echo=FALSE}
 plot(list_results, "prec/rec",annotate = 1, legend= "bottomleft")
 title("UBCF Precision/recall")  
 
-##```
+```
 
-#*Note: The precision/recall support UBCF_pea_k_30 appears to be the best UBCF model with high persision*
+*Note: The precision/recall support UBCF_pea_k_30 appears to be the best UBCF model with high persision*
   
   
-  #### Create IBCF Model
+#### Create IBCF Model
 # Create IBCF Models with varing vector_kn and different methods i.e.: cosine and pearson
-##```{r Create IBCF model, include=FALSE}
+
+```{r Create IBCF model, include=FALSE}
 vector_k <- c(5,10,20,30)
 IBCF_cos_model <- lapply(vector_k, function(k,l){ list(name ="IBCF", param = list(method = "cosine", k = k))})
 names(IBCF_cos_model) <- paste0("ICBF_cos_k_", vector_k)
@@ -489,30 +490,30 @@ names(IBCF_pea_model) <- paste0("IBCF_pea_k_", vector_k)
 names(IBCF_pea_model)
 models <- append(IBCF_cos_model, IBCF_pea_model)
 models
-##```
+```
 
 #Get IBCF model results 
 
-#```{r Get IBCF results, include=FALSE}
+```{r Get IBCF results, include=FALSE}
 n_recommendations <- c(1, 5, seq(10,100,10))
 list_results <- evaluate(x = eval_sets, method = models, n = n_recommendations)   
 
-#```
+```
 
 #Plot IBCF with varing vector_kn and different methods results   
 
-#```{r plot IBCF ROC curve, echo=FALSE}
+```{r plot IBCF ROC curve, echo=FALSE}
 plot(list_results, annotate = c (1,2), legend = "bottomright")
 title("IBCF ROC curve")   
-#```
+```
 
-#*Note ICBF_pea_k30 appears the best*
+*Note ICBF_pea_k30 appears the best*
   
-  #```{r plot IBCF Precision/recall, echo=FALSE}
+```{r plot IBCF Precision/recall, echo=FALSE}
 plot(list_results, "prec/rec",annotate = 1, legend= "bottomright")
 title("Precision/recall")   
 
-#```
+```
 
 #*Note IBCF Pearson with higher k values had better precision than the cosine algorithm.
 
@@ -520,7 +521,7 @@ title("Precision/recall")
 
 #The POPULAR model is simple based on items popularity.
 
-#```{r Create Popular model, include=FALSE}
+```{r Create Popular model, include=FALSE}
 vector_nn <- 30
 POP_model <- lapply(vector_nn, function(nn,l){ list(name ="POPULAR")})
 names(POP_model) <- "POPULAR"
@@ -528,50 +529,54 @@ names(POP_model)[1]
 models <- POP_model
 models  
 
-#```
+```
 
-#```{r Get Popular list results, include=FALSE}
+
+```{r Get Popular list results, include=FALSE}
 n_recommendations <- c(1, 5, seq(10,100,10))
 list_results <- evaluate(x = eval_sets, method = models, n = n_recommendations)
-#```
+```
 
-#```{r Plot Popular ROC Curve, echo=FALSE}
+```{r Plot Popular ROC Curve, echo=FALSE}
 #plot and choose the optimal parameters
 plot(list_results, annotate = c (1,2), legend = "topleft")
 title("POPULAR ROC Curve")   
 
-#```
+```
 
-#*Note #30 the slight increase in TPR and that FPR is well below 0.4 which give use our best model reviewed.*
+*Note #30 the slight increase in TPR and that FPR is well below 0.4 which give use our best model reviewed.*
 
+```{r Plot Popular Precision/recall, echo=FALSE}
 
-#```{r Plot Popular Precision/recall, echo=FALSE}
 plot(list_results, "prec/rec",annotate = 1, legend= "bottomright")
 title("POPULAR Precision/recall")   
-#```
 
-#* Note The POPOULAR Precision and recall precion rates are good*
+```
+
+* Note The POPOULAR Precision and recall precion rates are good*
   
   #### Combine best results from UBCF, IBCF and POPULAR models to determine my Final Model
   
-  #```{r include=FALSE}
+```{r include=FALSE}
 models <- append(UBCF_pea_model, POP_model )
 n_recommendations <- c(1, 5, seq(10,100,10))
 list_results <- evaluate(x = eval_sets, method = models, n = n_recommendations)  
 
-#```
+```
 
 #Plot Best Results   
 
-#```{r Plot Best ROC Curve, echo=FALSE}
+```{r Plot Best ROC Curve, echo=FALSE}
 #plot and choose the optimal parameters
 plot(list_results, annotate = c (1,2), legend = "topleft")
 title("ROC curve")   
 
-#```
+```
 
-#```{r Plot Best Precision/recall, echo=FALSE}
+```{r Plot Best Precision/recall, echo=FALSE}
+
 plot(list_results, "prec/rec",annotate = 1, legend= "bottomright")
 title("Precision/recall")   
-#```
+
+```
 
