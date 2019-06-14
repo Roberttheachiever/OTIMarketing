@@ -1,3 +1,13 @@
+---
+title: "CYO-OTI Class Recommender"
+author: "Robert Lewis"
+date: "June 13, 2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
 
 ### Final Project Introduction
 #The purpose of this project (CYO) is to create an algorithm for recommending classes for users based on other programs they have completed and the scores they received. I will be using a subset of modified data to protect the actual users infomation. I will use the recommenderlab for making my recommendation and use different models to identify the best model with the lowest error acuracy.
@@ -564,67 +574,4 @@ title("ROC curve")
 plot(list_results, "prec/rec",annotate = 1, legend= "bottomright")
 title("Precision/recall")   
 #```
-
-#It appears that POPULAR model is best visualy with UBCF_per_k_30 being extremly close.
-
-### Final Result with Validation dataset
-#Based on the previous models I have reviewed all being very close, I will Evaluate the validation set using the same evaluation process and report the results.  
-
-#```{r Initial view of Validation data, message=FALSE, warning=FALSE, include=FALSE, paged.print=FALSE}
-#Initial Analysis of Validation data:
-#Dimensions (rows/columns):
-dim(validation)
-#```
-#```{r Corner view of Validation data, message=FALSE, warning=FALSE, include=FALSE, paged.print=FALSE}
-corner(validation)  
-
-#```
-#```{r Summary of validation, echo=FALSE}
-cat("Total number of ratings in validation dataset:\t", nratings(val_data),"\n")
-cat("      Total Students to Courses in validation set:\t", dim(val_data), "\n")   
-#```
-
-#```{r echo=TRUE}
-items_to_keep <-30
-rating_threshold <- 4
-n_fold <- 5
-n_recommendations <- c(1, 5, seq(10,100,10))
-val_sets <- evaluationScheme(data = val_data, method = "cross-validation", train 
-                             = percentage_training, given = items_to_keep, goodRating = rating_threshold, k = n_fold)  
-#```
-
-#```{r Final UBCF Evaluation results, eval=FALSE, include=FALSE}
-UBCF_eval <- evaluate(x = val_sets, method = "UBCF", k = n_fold, type = "ratings")
-head(getConfusionMatrix(UBCF_eval)[[1]]) 
-#```
-
-#Final IBCF Evaluation results:  
-  #```{r include=FALSE}
-IBCF_eval <- evaluate(x = val_sets, method = "IBCF", k = n_fold, type = "ratings")
-head(getConfusionMatrix(IBCF_eval)[[1]])
-#```
-
-#Final POPULAR Evaluation results:  
-  #```{r Final POPULAR Evaluation results, echo=TRUE}
-POP_eval <- evaluate(x = val_sets, method = "POPULAR", n = n_recommendations, type = "ratings")
-head(getConfusionMatrix(POP_eval)[[1]])
-#```
-
-
-### Conclusion
-
-#In conlusion the **POPULAR**  algorithm model from the recommenderLab library, keeping **30** items with a predicted movie rating of **4**  reports an RMSE of **0.860** which is lower RMSE than required. Although I though the content based filtering approach would have been the the best methods. Another huge take away fron this project is getting the data in the right format can vastly increase performance.
-#```{r File size reduction, echo=FALSE}
-cat("The Prepared dataset was reduced by", object.size(as(edx_3, "matrix"))/object.size(edx_3),"to 1 byte when converted from matrix to realRatingsMatrix which greatly reduced time, memory issues and stress.\n")
-
-#```
-#As a legacy programmer from the days of assemble language in the 70's,  this Data Science Class offered by Harvardx have given me new tools, toys and a different way to approach the future, Thank Rafael Irizarry
-
-####References
-
-#Michael Hahsler (2019). recommenderlab: Lab for Developing and Testing Recommender Algorithms. R package version 0.2-4. https://github.com/mhahsler/recommenderlab
-
-
-
-```
 
