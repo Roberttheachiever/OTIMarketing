@@ -10,7 +10,7 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 ### Project Introduction
-The purpose of this project (CYO) is to create recommending of classes for past users based on courses they have previously completed. I will be using a subset of modified data to protect the actual users infomation. I will use the recommenderlab for making my recommendation and use different models to identify the best model with the lowest error accuracy.
+The purpose of this project (CYO) is to create recommending of classes for past users based on courses they have previously completed. I will be using a subset of modified data to protect the actual users infomation. I will use the recommenderlab for making my recommendation and use different models to identify the best model with the lowest error accuracy.  The idea is that given Student Course Completion data by many students for many classes and grades, one can recommend other classes not known to her or him from similiar grades (see, e.g., Goldberg, Nichols, Oki, and Terry 1992) 
 
 ```{r load Libraries, include=FALSE}
 if(!require(dplyr)) install.packages("dplyr", repos = "http://cran.us.r-project.org")
@@ -37,7 +37,7 @@ library(recommenderlab)
 
 ### Load data
 
-```{r Load Data}
+```{r Load Data, include=FALSE}
 
 if(!file.exists("OnlineStudentHistory.csv")){
     download.file("https://github.com/Roberttheachiever/OTIMarketing/OnlineStudentHistory.csv", destfile = "OnlineStudentHistory.csv")}
@@ -49,14 +49,19 @@ Student_data <- read.csv(file.path("OnlineStudentHistory.csv"))
 ### Review structure and details of dataset  
 
 ```{r Review structure and details of dataset  }
-nrow(Student_data) #courses taking by students
-ncol(Student_data)  #data columns
-names(Student_data) #column Names
-str(Student_data)  #structure of data
-summary(Student_data) #stats per columns
-class(Student_data) #dat.frame
-unique_studentIds<-unique(Student_data$StudentID) # get unique Student IDS
-students <- sample(unique(Student_data$StudentID),100) # get small sample of data to explore
+
+cat("Total Number of Courses Completed:", nrow(Student_data),"\n\n" ) 
+unique_studentIds<-unique(Student_data$StudentID)
+cat("Total number of Students:", length(unique_studentIds),"\n\n" )
+unique_CourseIds<-unique(Student_data$CourseID)
+cat("Total number of Courses:", length(unique_CourseIds) ,"\n\n" )
+cat("Total number of columns:", ncol(Student_data) ,"\n\n" )
+cat("Column Names:", names(Student_data) ,"\n\n" )
+cat("Structure of data:\n\n" )
+str(Student_data)
+cat("Summary of data:\n\n" )
+summary(Student_data)
+students <- sample(unique(Student_data$StudentID),100)
 
 student_matrix <- Student_data %>% #create a matrix with StudentID, CourseID, Rating (grade average)
   select(StudentID,CourseID,Rating) %>%
@@ -80,11 +85,32 @@ Student_data %>%
   geom_histogram(bins = 30, color = "black") + 
   scale_x_log10() + 
   ggtitle("Course Rating Counts")  
+
 ```
 
 *Note It appears in my dataset that less than 100 students have taken 5 classes
 
-```{r Plot Student Rating Counts}
+```{r create smaller set to speed up processing, eval=FALSE, include=FALSE}
+keep <- Student_data %>%
+  dplyr::count(CourseID) %>%
+  top_n(10) %>%
+  pull(CourseID)
+
+Student_data <- Student_data %>%filter(CourseID %in% keep)  
+```
+
+```{r Plot Course Rating Counts Top 10}
+#Plot Course Rating Counts for the count of courses rated:  
+Student_data %>% 
+  dplyr::count(CourseID) %>%
+  ggplot(aes(n)) + 
+  geom_histogram(bins = 30, color = "black") + 
+  scale_x_log10() + 
+  ggtitle("Course Rating Counts") 
+```
+
+
+```{r Plot Student Rating Counts }
 #Plot StudentData for the count of Student ratings:  
 src <- Student_data %>% 
   dplyr::count(StudentID) 
@@ -94,7 +120,7 @@ src %>% ggplot(aes(n)) +
   scale_x_log10() + 
   ggtitle("Student Rating Counts") 
 
-View(src)
+#View(src)
    
 ```
 
@@ -113,13 +139,25 @@ Student_data %>%
 
 ### Preparing Data:   
 ```{r Clean data remove Student that have only taking 1 course, include=FALSE}
+one_class_students <- Student_data %>%
+  dplyr::count(StudentID) %>%
+  filter(n <= 1)
+
+cat("Total Number of 1 course students:\t")
+count(one_class_students)
+cat("\n\n")
+
 keep_StudentID <- Student_data %>%
   dplyr::count(StudentID) %>%
   filter(n > 1) %>%
   pull(StudentID)
 
 Student_data1 <- Student_data %>% filter(StudentID %in% keep_StudentID)  
+
 summary(Student_data1)  
+
+#Not filtered
+Student_data1 <- Student_data
 
 ```
 
@@ -160,7 +198,7 @@ str(Students_3)
 
 ```
 
-####Review the prepared dataset 
+### Review the prepared dataset 
 
 ```{r Review the prepared dataset }
 
@@ -169,8 +207,8 @@ hist(getRatings(Students_3), main = "Distribution of Ratings")
 
 ```
 
-#The Distribution of Ratings shows we have different possible ratings from 70 to 100
-  This data is based on the students who completed courses which reqires 70% which is apparent looking at the data.
+The Distribution of Ratings shows we have different possible ratings from 70 to 100.
+This data is based on the students who completed courses which reqires a score of 70% or higher to complete, note the frequencies are all fair similiar.
 
 ```{r Normalized Distribution of Ratings, echo=FALSE }
 hist(getRatings(normalize(Students_3)),breaks = 100,main = "Normalized Distribution of Ratings")  
@@ -209,9 +247,9 @@ nratings(model_data)
 
 ```
 
-#### Model dataset Distribution of Ratings  
+### Model dataset Distribution of Ratings  
 
-#Plot the Model Data Course ratings  
+Plot the Model Data Course ratings  
 
 ```{r }
 hist(getRatings(model_data), main = "Distribution of Ratings after removing Outliers")   
@@ -228,7 +266,7 @@ image(as(model_data,"matrix"), main = "Visual image of Rating distribution - Mod
 
 *Note Prepared Model ratings data appears slightly skewed. *
   
-#Analyze number of course ratings per student:
+Analyze number of course ratings per student:
 
 ```{r Analyze number of course ratings per student}
 table(rowCounts(model_data)) 
@@ -237,7 +275,7 @@ table(rowCounts(model_data))
 
 *Note that 11619 have rated 2 classes, we have a few Outlier who have rated 6 classes, will keep for now performance ihas not been a issue*
   
-#### Create Modeling datasets  
+### Create Modeling datasets  
 
 ```{r Create recommender sets}
 
@@ -253,7 +291,7 @@ dim(rec_data_test)
 
 ```
 
-#### Build Models Options 
+### Build Models Options 
 
 ```{r Get list of recommender models available}
 
@@ -269,8 +307,8 @@ recommender_models  #Description, references and parameteres of models
 
 I will use various models then compare prediction accuracies to determine the best algorithim. The available models I will first use a user-based collaborative filtering algorithm (UBCF), then item-based collaborative filtering (IBCF) and item popularity algorithms (POPULAR).
 
-#### User Based Collborative Filtering (UBCF) Model
-#Collaborative filtering uses algorithims to filter users ratings to make personalized recommendations from similiar users (definition from whatis.techtarget.com/definition/collaborative-filtering).
+### User Based Collborative Filtering (UBCF) Model
+Collaborative filtering uses algorithims to filter users ratings to make personalized recommendations from similiar users (definition from whatis.techtarget.com/definition/collaborative-filtering).
 
 ```{r Build User Based Collabrotive model}
 
@@ -279,7 +317,7 @@ ubcf_model
 
 ```
 
-# Using the UBCF recommendations 
+### Using the UBCF recommendations 
 
 ```{r Get recommender test set}
 
@@ -290,7 +328,7 @@ ubcf_list <- sapply(ubcf_predicted@items, function(x){colnames(model_data)[x]})
 
 ```
 
-#List of recommendation courses for test set users 7 thru 10: 
+List of recommendation courses for test set users 7 thru 10: 
 
 ```{r List of recommendation}
 
@@ -298,7 +336,7 @@ ubcf_list[7:10]
 
 ```
 
-#Total number of recommendations by users in test set  
+Total number of recommendations by users in test set  
 
 ```{r Total number of recommendations by users}
 
@@ -313,7 +351,7 @@ table(number_of_items)
 *Note with UBCF with 20 recommendation Error when creating evaluator schemes 'Some observations have size<given!'*
 
 
-#### Create an evaluators scheme:
+### Create an evaluators scheme:
 
 ```{r Create evaluator schemes}
 
@@ -326,7 +364,7 @@ eval_sets
 
 ```
 
-#Create evaluation datasets using cross-validation method, keeping **`r items_to_keep`** items and **`r n_fold`** folds with rating threshold of **`r rating_threshold`**  using the recommenderLab evaluationScheme function.  
+Create evaluation datasets using cross-validation method, keeping **`r items_to_keep`** items and **`r n_fold`** folds with rating threshold of **`r rating_threshold`**  using the recommenderLab evaluationScheme function.  
 
 ```{r Get size of evaluation sets, echo=FALSE}
 
@@ -341,7 +379,7 @@ train = training set
 known = test set used to build recommendations   
 unknown = test set to test the recommendations   
 
-#### Create UBCF Recommender  
+### Create UBCF Recommender  
 
 ```{r Evaluate UBCF known, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE}
 model_to_evaluate <-"UBCF"
@@ -377,7 +415,7 @@ apply(eval_accuracy,2,mean)
 
 ```
 
-#Calculate the overall accuracy given in unknown test set:
+Calculate the overall accuracy given in unknown test set:
 
 ```{r Calculate the overall accuracy given in unknown test set}
   
@@ -392,7 +430,7 @@ Using a precicion recall plot to predict accuracy with confusion matrix for know
 
 ```{r Use prediction recall to predict accuarcy, message=FALSE, warning=FALSE, include=FALSE, paged.print=FALSE}
 
-results <- evaluate(x = eval_sets, method = model_to_evaluate, n = seq(10, 100, 10))   
+results <- evaluate(x = eval_sets, method = model_to_evaluate, n = seq(1, 40, 5))   
 
 ```
 
@@ -411,7 +449,7 @@ Sum up the UBCF TP, FP, FN, TN indexes and plot:
 ```{r sum up the indexes }
 
 columns_to_sum <- c("TP","FP","FN","TN")  
-indicies_summed <- Reduce("+", getConfusionMatrix(results))[,columns_to_sum]  
+indicies_summed <- Reduce("+", getConfusionMatrix(results)) #[,columns_to_sum]  
 indicies_summed  
 
 ```
@@ -425,6 +463,9 @@ Create UBCF Receiver operating characteristic (ROC) plot
 plot(results, annotate = TRUE, main = "UBCF - ROC Curve")   
 
 ```
+
+ROC curves are used in clinical biochemistry to choose the most appropriate cut-off for a test. The best cut-off has the highest true positive rate together with the lowest false positive rate. (Ekelund, 2011). Looking at the ratio of area above the curve compared to the area below the curve being less then 
+
 
 *Note plot shows the relation ship between TPR and FPR*
 *At approx #35 the TPR is close to 0.7 and the FPR is Greater than.9 bad*
@@ -441,7 +482,7 @@ plot(results, "prec/rec",annotate = 1, main = "UBCF - Precision/recall")
 *Note the precision/recall at #30 is not the best at .002/0.61 *
 
 
-#### Fine Tuning of the Models to get best results
+### Fine Tuning of the Models to get best results
 Lets try different factors to see if we can get a better Precision Recall result.
 Create UBCF Models with varing vector_nn and different methods i.e.: cosine and pearson.
 ```{r Fine tune UBCF model, message=FALSE, warning=FALSE, include=FALSE, paged.print=FALSE}
@@ -459,12 +500,12 @@ models
 Determine the best UBCF results based on number of recommendations  
 
 ```{r Get UBCF results, include=FALSE}
-n_recommendations <- c(1, 5, seq(10,100,10))
+n_recommendations <- c(1, 5, seq(1,10,1))
 list_results <- evaluate(x = eval_sets, method = models, n = n_recommendations)  
 
 ```
 
-#Plot UBCF Models with varing vector_nn and different methods results
+Plot UBCF Models with varing vector_nn and different methods results
 
 ```{r plot UBCF model results, echo=FALSE}
 plot(list_results, annotate = c (1,2), legend = "bottomright")
@@ -483,8 +524,8 @@ title("UBCF Precision/recall")
 *Note: The precision/recall support UBCF_pea_k_30 appears to be the best UBCF model with high persision*
   
   
-#### Create IBCF Model
-# Create IBCF Models with varing vector_kn and different methods i.e.: cosine and pearson
+### Create IBCF Model
+Create IBCF Models with varing vector_kn and different methods i.e.: cosine and pearson
 
 ```{r Create IBCF model, include=FALSE}
 vector_k <- c(5,10,20,30)
@@ -494,19 +535,19 @@ names(IBCF_cos_model)[1]
 IBCF_pea_model <- lapply(vector_k, function(k,l){ list(name ="IBCF", param = list(method = "pearson", k = k))})
 names(IBCF_pea_model) <- paste0("IBCF_pea_k_", vector_k)
 names(IBCF_pea_model)
-models <- append(IBCF_cos_model, IBCF_pea_model)
-models
+IBCF_models <- append(IBCF_cos_model, IBCF_pea_model)
+#IBCF_models
 ```
 
-#Get IBCF model results 
+Get IBCF model results 
 
 ```{r Get IBCF results, include=FALSE}
-n_recommendations <- c(1, 5, seq(10,100,10))
-list_results <- evaluate(x = eval_sets, method = models, n = n_recommendations)   
+n_recommendations <- c(1, 5, seq(1,10,1))
+list_results <- evaluate(x = eval_sets, method = IBCF_models, n = n_recommendations)   
 
 ```
 
-#Plot IBCF with varing vector_kn and different methods results   
+Plot IBCF with varing vector_kn and different methods results   
 
 ```{r plot IBCF ROC curve, echo=FALSE}
 plot(list_results, annotate = c (1,2), legend = "bottomright")
@@ -521,14 +562,14 @@ title("Precision/recall")
 
 ```
 
-#*Note IBCF Pearson with higher k values had better precision than the cosine algorithm.
+*Note IBCF Pearson with higher k values had better precision than the cosine algorithm.
 
-####Create a POPULAR model  
+### Create a POPULAR model  
 
-#The POPULAR model is simple based on items popularity.
+The POPULAR model is simple based on items popularity.
 
 ```{r Create Popular model, include=FALSE}
-vector_nn <- 30
+vector_nn <- c(1)
 POP_model <- lapply(vector_nn, function(nn,l){ list(name ="POPULAR")})
 names(POP_model) <- "POPULAR"
 names(POP_model)[1]
@@ -539,7 +580,7 @@ models
 
 
 ```{r Get Popular list results, include=FALSE}
-n_recommendations <- c(1, 5, seq(10,100,10))
+n_recommendations <- c(1, 5, seq(1,10,1))
 list_results <- evaluate(x = eval_sets, method = models, n = n_recommendations)
 ```
 
@@ -561,16 +602,26 @@ title("POPULAR Precision/recall")
 
 * Note The POPOULAR Precision and recall precion rates are good*
   
-  #### Combine best results from UBCF, IBCF and POPULAR models to determine my Final Model
+  ### Combine best results from UBCF, IBCF and POPULAR models to determine my Final Model
   
 ```{r include=FALSE}
-models <- append(UBCF_pea_model, POP_model )
-n_recommendations <- c(1, 5, seq(10,100,10))
-list_results <- evaluate(x = eval_sets, method = models, n = n_recommendations)  
+best_vector_nn <- 10
+UBCF_pea_model <- lapply(best_vector_nn, function(nn,l){ list(name ="UBCF", param = list(method = "pearson", nn = nn))})
+names(UBCF_pea_model) <- paste0("UBCF_pea_k_", best_vector_nn)
+
+best_vector_k <- 30
+IBCF_pea_model <- lapply(best_vector_k, function(k,l){ list(name ="IBCF", param = list(method = "pearson", k = k))})
+names(IBCF_pea_model) <- paste0("IBCF_pea_k_", best_vector_k)
+
+best_models <- append(UBCF_pea_model, IBCF_pea_model)
+
+n_recommendations <- c(1, 5, seq(1,10,1))
+list_results <- evaluate(x = eval_sets, method = best_models, n = n_recommendations)  
 
 ```
 
-#Plot Best Results   
+Plot Best Results   
+
 
 ```{r Plot Best ROC Curve, echo=FALSE}
 #plot and choose the optimal parameters
@@ -586,3 +637,27 @@ title("Precision/recall")
 
 ```
 
+
+```{r Final UBCF Evaluation results, echo=FALSE}
+UBCF_eval <- evaluate(x = eval_sets, method = "UBCF", k = best_vector_k, type = "ratings")
+head(getConfusionMatrix(UBCF_eval)[[1]]) 
+```
+
+Final IBCF Evaluation results:  
+
+```{r Final IBCF Evaluation results, echo=FALSE}
+IBCF_eval <- evaluate(x = eval_sets, method = "IBCF", k = best_vector_nn, type = "ratings")
+head(getConfusionMatrix(IBCF_eval)[[1]])
+```
+
+
+
+
+### References
+
+Goldberg D, Nichols D, Oki BM, Terry D (1992). “Using collaborative ﬁltering to weave an information tapestry.” Communications of the ACM, 35(12), 61–70. ISSN 0001-0782. doi:http://doi.acm.org/10.1145/138859.138867.
+
+
+Michael Hahsler (2019). recommenderlab: Lab for Developing and Testing Recommender Algorithms. R package version 0.2-4. https://github.com/mhahsler/recommenderlab
+
+Suzanne Ekelund (2011), "ROC curves - what are they and how are they used?",https://acutecaretesting.org/en/articles/roc-curves-what-are-they-and-how-are-they-used
