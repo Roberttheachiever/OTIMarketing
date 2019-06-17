@@ -484,7 +484,7 @@ title("UBCF Precision/recall")
 
 ```
 
-*Note: The precision/recall support UBCF_pea_k_30 appears to be the best UBCF model with high persision*
+*Note: The precision/recall support UBCF_pea_k_10 appears to be the best UBCF model*
   
   
 ### Create IBCF Model
@@ -525,7 +525,7 @@ title("Precision/recall")
 
 ```
 
-*Note IBCF Pearson with higher k values had better precision than the cosine algorithm.
+*Note: The precision/recall support IBCF_pea_k_30 appears to be the best IBCF model*
 
 ### Create a POPULAR model  
 
@@ -554,7 +554,7 @@ title("POPULAR ROC Curve")
 
 ```
 
-*Note #30 the slight increase in TPR and that FPR is well below 0.4 which give use our best model reviewed.*
+*Note The POPULAR Appears to be a good model.*
 
 ```{r Plot Popular Precision/recall, echo=FALSE}
 
@@ -563,9 +563,9 @@ title("POPULAR Precision/recall")
 
 ```
 
-* Note The POPOULAR Precision and recall precion rates are good*
+* Note The POPOULAR Precision and recall precion do not total support a good model*
   
-  ### Combine best results from UBCF, IBCF and POPULAR models to determine my Final Model
+### Now I going to compare the best result of UBCF and POPULAR models to determine my Final Model
   
 ```{r include=FALSE}
 best_vector_nn <- 10
@@ -593,14 +593,14 @@ Plot Best Results
 ```{r Plot Best ROC Curve, echo=FALSE}
 #plot and choose the optimal parameters
 plot(list_results, annotate = c (1,2), legend = "topleft")
-title("ROC curve")   
+title("Best ROC curve")   
 
 ```
 
 ```{r Plot Best Precision/recall, echo=FALSE}
 
 plot(list_results, "prec/rec",annotate = 1, legend= "bottomright")
-title("Precision/recall")   
+title("Best Precision/recall")   
 
 ```
 
