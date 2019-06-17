@@ -1,12 +1,18 @@
 ---
 title: "CYO-OTI Class Recommender"
 author: "Robert Lewis"
-date: "June 13, 2019"
-output: html_document
+date: "June 17, 2019"
+output:
+  pdf_document: default
+  html_document: default
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(
+	echo = FALSE,
+	message = FALSE,
+	warning = FALSE
+)
 ```
 
 ### Project Introduction
@@ -97,7 +103,7 @@ src <- Student_data %>%
   dplyr::count(StudentID) 
 
 src %>% ggplot(aes(n)) + 
-  geom_histogram(bins = 30, color = "black") + 
+  geom_histogram(bins = 5, color = "black") + 
   scale_x_log10() + 
   ggtitle("Student Rating Counts") 
 
@@ -105,13 +111,13 @@ src %>% ggplot(aes(n)) +
    
 ```
 
-*Note: 20000+ students have taken 1 class, very few have taken 4 and 5.
+*Note: 20000+ students have taken 1 class, followed closely 3 then very few have taken 2, 4 and 5.
 
 ```{r Plot Ratings Counts}
 #Plot StudentData for the count of ratings:  
 
 Student_data %>% 
-  dplyr::count(Rating) %>% 
+  dplyr::count(round(Rating)) %>% 
   ggplot(aes(n)) + 
   geom_histogram(bins = 10, color = "black") + 
   scale_x_log10() + 
@@ -120,7 +126,7 @@ Student_data %>%
 ```
 
 ### Preparing Data:   
-```{r Clean data remove Student that have only taking 1 course, echo=FALSE}
+```{r Clean data remove Student that have only taking 1 course, echo=TRUE}
 
 # Due to error in discovered in creating evaluation schemes i.e.: Some observations have size<given! 
 # I will remove the students with only one course completed.
@@ -192,7 +198,7 @@ hist(getRatings(Students_3), main = "Distribution of Ratings")
 The Distribution of Ratings shows we have different possible ratings from 70 to 100.
 This data is based on the students who completed courses which reqires a score of 70% or higher to complete, note the frequencies are all fair similiar.
 
-```{r Normalized Distribution of Ratings, echo=FALSE }
+```{r Normalized Distribution of Ratings, echo=TRUE }
 hist(getRatings(normalize(Students_3)),breaks = 100,main = "Normalized Distribution of Ratings")  
 
 ```
@@ -201,7 +207,7 @@ hist(getRatings(normalize(Students_3)),breaks = 100,main = "Normalized Distribut
 
 ```{r Visual image of distribution of first 500 Students}
 
-##```{r Visual image of distribution of first 500 users, echo=FALSE}
+##```{r Visual image of distribution of first 500 users, echo=TRUE}
 image(Students_3[1:500,],main = "Visual image of distribution of first 500 students")  
 
 ```
@@ -217,7 +223,7 @@ boxplot(rowMeans(Students_3),main = "Avg Ratings of Prepared data")
 
 ```{r Dimisions of dataset to be used for models}
 model_data = Students_3
-#Create model data, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE}
+#Create model data, echo=TRUE, message=FALSE, warning=FALSE, paged.print=FALSE}
 dim(model_data)
 
 ```
@@ -230,7 +236,7 @@ nratings(model_data)
 ```
 
   
-```{r image of prepared model dataset, echo=FALSE}
+```{r image of prepared model dataset, echo=TRUE}
 image(as(model_data,"matrix"), main = "Visual image of Rating distribution - Model Data")  
 
 ```
@@ -301,10 +307,17 @@ ubcf_list <- sapply(ubcf_predicted@items, function(x){colnames(model_data)[x]})
 
 List of recommendation courses for test set users 7 thru 10: 
 
-```{r List of recommendation}
-
-ubcf_list[7:10]  
-
+```{r List of recommendation, echo=TRUE}
+#Show recommender couseID
+ubcf_list[1:5] 
+#get integer to match with course title to display
+ubcf_list_Courses <- as.integer(sub(".*_", "", ubcf_list[1:5]))
+#Get list of Courses by ID and name
+courses <- Student_data %>% select("CourseID","CourseName")
+courses_recommended <- courses %>% group_by(CourseName) %>%filter(CourseID %in%ubcf_list_Courses)  
+unique(courses_recommended)
+cat("Recommended Courses Names for test user:\n\n")
+#corner(unique(courses_recommended$CourseName))
 ```
 
 Total number of recommendations by users in test set  
@@ -333,7 +346,7 @@ eval_sets
 
 Create evaluation datasets using cross-validation method, keeping **`r items_to_keep`** items and **`r n_fold`** folds with rating threshold of **`r rating_threshold`**  using the recommenderLab evaluationScheme function.  
 
-```{r Get size of evaluation sets, echo=FALSE}
+```{r Get size of evaluation sets, echo=TRUE}
 
 size_sets <- sapply(eval_sets@runsTrain, length)   
 cat("Sizes of Evaluation Sets:\t", size_sets, "\n")   
@@ -348,7 +361,7 @@ unknown = test set to test the recommendations
 
 ### Create UBCF Recommender  
 
-```{r Evaluate UBCF known, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE}
+```{r Evaluate UBCF known, echo=TRUE, message=FALSE, warning=FALSE, paged.print=FALSE}
 model_to_evaluate <-"UBCF"
 model_paramenter <- NULL
 eval_recommender <- Recommender(data = getData(eval_sets, "train"), method = model_to_evaluate, parameter = model_paramenter)
@@ -360,7 +373,7 @@ Calculate the UBCF predictions for known test set:
 
 ```{r Calculate the UBCF predictions for known test set}
  
-items_to_recommend <- 2 
+items_to_recommend <- 3 
 eval_prediction <- predict(object = eval_recommender, newdata = getData(eval_sets, "known"), n = items_to_recommend, type = "ratings")
 eval_prediction 
 
@@ -368,11 +381,12 @@ eval_prediction
 
 Calculate the prediction accuracy for each user in unknown test set:
 
-```{r Calculate the prediction accuracy UBCF, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE}
+```{r Calculate the prediction accuracy UBCF, echo=TRUE, message=FALSE, warning=FALSE, paged.print=FALSE}
 eval_accuracy <- calcPredictionAccuracy(x = eval_prediction, data = getData(eval_sets, "unknown"), byUser = TRUE)
 head(eval_accuracy)
 
 ```
+*note: being of a small dataset many student did not get any recommendation due to unmatch similiar students  courses and ratings*
 
 Calculate the overall avgerages in unknown test set: 
 
@@ -403,7 +417,7 @@ results <- evaluate(x = eval_sets, method = model_to_evaluate, n = seq(1, 10, 1)
 
 Evaluate the result with confusion matrix   
 
-```{r Show Confusion Matrix, echo=FALSE}  
+```{r Show Confusion Matrix, echo=TRUE}  
 
 head(getConfusionMatrix(results)[[1]])  
 
@@ -423,7 +437,7 @@ indicies_summed
 
 Create UBCF Receiver operating characteristic (ROC) plot  
 
-```{r Create UBCF ROC plot, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE}
+```{r Create UBCF ROC plot, echo=TRUE, message=FALSE, warning=FALSE, paged.print=FALSE}
 
 plot(results, annotate = TRUE, main = "UBCF - ROC Curve")   
 
@@ -444,7 +458,7 @@ plot(results, "prec/rec",annotate = 1, main = "UBCF - Precision/recall")
 *Note the precision/recall also indicates being bad
 
 
-### Fine Tuning of the Models to get best results
+### Fine Tuning of the UBCF models to get better results
 Lets try different factors to see if we can get a better ROC and Precision Recall result.
 Create UBCF Models with varing vector_nn and different methods i.e.: cosine and pearson.
 
@@ -470,7 +484,7 @@ list_results <- evaluate(x = eval_sets, method = models, n = n_recommendations)
 
 Plot UBCF Models with varing vector_nn and different methods results
 
-```{r plot UBCF model results, echo=FALSE}
+```{r plot UBCF model results, echo=TRUE}
 plot(list_results, annotate = c (1,2), legend = "bottomright")
 title("UBCF ROC curve")  
 
@@ -478,7 +492,7 @@ title("UBCF ROC curve")
 
 *Note: UBCF_pea_k_30 appears to be the best UBCF model with TPR closes to 0.7 and FPR less than 0.4*
 
-```{r echo=FALSE}
+```{r echo=TRUE}
 plot(list_results, "prec/rec",annotate = 1, legend= "bottomleft")
 title("UBCF Precision/recall")  
 
@@ -512,14 +526,14 @@ list_results <- evaluate(x = eval_sets, method = IBCF_models, n = n_recommendati
 
 Plot IBCF with varing vector_kn and different methods results   
 
-```{r plot IBCF ROC curve, echo=FALSE}
+```{r plot IBCF ROC curve, echo=TRUE}
 plot(list_results, annotate = c (1,2), legend = "bottomright")
 title("IBCF ROC curve")   
 ```
 
 *Note ICBF_pea_k30 appears the best*
   
-```{r plot IBCF Precision/recall, echo=FALSE}
+```{r plot IBCF Precision/recall, echo=TRUE}
 plot(list_results, "prec/rec",annotate = 1, legend= "bottomright")
 title("Precision/recall")   
 
@@ -547,7 +561,7 @@ n_recommendations <- c(1, 5, seq(1,10,1))
 list_results <- evaluate(x = eval_sets, method = models, n = n_recommendations)
 ```
 
-```{r Plot Popular ROC Curve, echo=FALSE}
+```{r Plot Popular ROC Curve, echo=TRUE}
 #plot and choose the optimal parameters
 plot(list_results, annotate = c (1,2), legend = "topleft")
 title("POPULAR ROC Curve")   
@@ -556,16 +570,15 @@ title("POPULAR ROC Curve")
 
 *Note The POPULAR Appears to be a good model.*
 
-```{r Plot Popular Precision/recall, echo=FALSE}
+```{r Plot Popular Precision/recall, echo=TRUE}
 
 plot(list_results, "prec/rec",annotate = 1, legend= "bottomright")
 title("POPULAR Precision/recall")   
 
 ```
 
-* Note The POPOULAR Precision and recall precion do not total support a good model*
+*Note The POPOULAR Precision and recall precion do not total support a good model*
   
-### Now I going to compare the best result of UBCF and POPULAR models to determine my Final Model
   
 ```{r include=FALSE}
 best_vector_nn <- 10
@@ -587,17 +600,18 @@ list_results <- evaluate(x = eval_sets, method = best_models, n = n_recommendati
 
 ```
 
-Plot Best Results   
+### Plot Best Results   
 
+Now I going to compare the best result of UBCF and POPULAR models to determine my Final Model
 
-```{r Plot Best ROC Curve, echo=FALSE}
+```{r Plot Best ROC Curve, echo=TRUE}
 #plot and choose the optimal parameters
 plot(list_results, annotate = c (1,2), legend = "topleft")
 title("Best ROC curve")   
 
 ```
 
-```{r Plot Best Precision/recall, echo=FALSE}
+```{r Plot Best Precision/recall, echo=TRUE}
 
 plot(list_results, "prec/rec",annotate = 1, legend= "bottomright")
 title("Best Precision/recall")   
@@ -605,14 +619,14 @@ title("Best Precision/recall")
 ```
 
 
-```{r Final UBCF Evaluation results, echo=FALSE}
+```{r Final UBCF Evaluation results, echo=TRUE}
 UBCF_eval <- evaluate(x = eval_sets, method = "UBCF", k = best_vector_k, type = "ratings")
 head(getConfusionMatrix(UBCF_eval)[[1]]) 
 ```
 
 Final IBCF Evaluation results:  
 
-```{r Final IBCF Evaluation results, echo=FALSE}
+```{r Final IBCF Evaluation results, echo=TRUE}
 IBCF_eval <- evaluate(x = eval_sets, method = "IBCF", k = best_vector_nn, type = "ratings")
 head(getConfusionMatrix(IBCF_eval)[[1]])
 ```
