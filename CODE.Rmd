@@ -46,9 +46,9 @@ library(recommenderlab)
 ```{r Load Data, include=FALSE}
 
 if(!file.exists("OnlineStudentdata.csv")){
-    download.file("https://github.com/Roberttheachiever/OTIMarketing/blob/Harvard-CYO-Project/OnlineStudentData.csv", destfile = "OnlineStudentData.csv")}
+    download.file("https://github.com/Roberttheachiever/OTIMarketing/raw/Harvard-CYO-Project/OnlineStudentData.csv", destfile = "OnlineStudentdata.csv")}
   
-Student_data <- read.csv(file.path("OnlineStudentData.csv"))  
+Student_data <- read.csv(file.path("OnlineStudentdata.csv"))  
 
 ```
 
