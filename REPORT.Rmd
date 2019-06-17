@@ -444,7 +444,7 @@ plot(results, annotate = TRUE, main = "UBCF - ROC Curve")
 
 ```
 
-ROC curves are used in clinical biochemistry to choose the most appropriate cut-off for a test. The best cut-off has the highest true positive rate together with the lowest false positive rate. (Ekelund, 2011). Looking at the ratio of area above the curve compared to the area below the curve it appears model has almost failed.
+ROC curves are used in to choose the most appropriate cut-off for a test. The best cut-off has the highest true positive rate together with the lowest false positive rate. (Ekelund, 2011). Looking at the ratio of area above the curve compared to the area below the curve it appears model has almost failed.
 
 *At approx #6 the TPR/FPR is at its best*
 
@@ -536,7 +536,7 @@ title("IBCF ROC curve")
   
 ```{r plot IBCF Precision/recall, echo=TRUE}
 plot(list_results, "prec/rec",annotate = 1, legend= "bottomright")
-title("Precision/recall")   
+title("IBCF Precision/recall")   
 
 ```
 
@@ -607,14 +607,14 @@ Now I going to compare the best result of UBCF and POPULAR models to determine m
 
 ```{r Plot Best ROC Curve, echo=TRUE}
 #plot and choose the optimal parameters
-plot(list_results, annotate = c (1,2), legend = "topleft")
+plot(list_results, annotate = c (1,2), legend = "bottomright")
 title("Best ROC curve")   
 
 ```
 
 ```{r Plot Best Precision/recall, echo=TRUE}
 
-plot(list_results, "prec/rec",annotate = 1, legend= "bottomright")
+plot(list_results, "prec/rec",annotate = 1, legend= "bottomleft")
 title("Best Precision/recall")   
 
 ```
@@ -646,4 +646,4 @@ Goldberg D, Nichols D, Oki BM, Terry D (1992). “Using collaborative ﬁltering
 
 Michael Hahsler (2019). recommenderlab: Lab for Developing and Testing Recommender Algorithms. R package version 0.2-4. https://github.com/mhahsler/recommenderlab
 
-Suzanne Ekelund (2011), "ROC curves - what are they and how are they used?", https://acutecaretesting.org/en/articles/roc-curves-what-are-they-and-how-are-they-used.
+Suzanne Ekelund (2011), "ROC curves - what are they and how are they used?",  https://acutecaretesting.org/en/articles/roc-curves-what-are-they-and-how-are-they-used.
