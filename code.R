@@ -26,22 +26,26 @@ if(!file.exists("OnlineStudentHistory.csv")){
   
 Student_data <- read.csv(file.path("OnlineStudentHistory.csv"))
 #review structure of dataset
-nrow(Student_data)
-ncol(Student_data)
-names(Student_data)
-str(Student_data)
-summary(Student_data)
-class(Student_data)
-
+cat("Total Number of Courses Completed:", nrow(Student_data),"\n\n" ) 
 unique_studentIds<-unique(Student_data$StudentID)
-       
+cat("Total number of Students:", length(unique_studentIds),"\n\n" )
+unique_CourseIds<-unique(Student_data$CourseID)
+cat("Total number of Courses:", length(unique_CourseIds) ,"\n\n" )
+cat("Total number of columns:", ncol(Student_data) ,"\n\n" )
+cat("Column Names:", names(Student_data) ,"\n\n" )
+cat("Structure of data:\n\n" )
+str(Student_data)
+cat("Summary of data:\n\n" )
+summary(Student_data)
 students <- sample(unique(Student_data$StudentID),100)
-
+#create a matrix with StudentID, CourseID, Rating (grade average)
 student_matrix <- Student_data %>% 
   select(StudentID,CourseID,Rating) %>%
   mutate(Rating = 1) %>%
   spread(CourseID, Rating) %>%
   as.matrix() 
+cat("Sample of Student Data\n\n")
+corner(student_matrix, c=12,r=12) #view data
 
 #student_matrix
 
@@ -76,7 +80,18 @@ summary(Student_data)
 names(Student_data)
 
 ### Preparing Data:   
-#Clean data remove Student that have only taking 1 course, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE}
+# Clean data remove Student that have only taking 1 course, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE}
+# Due to error in discovered in creating evaluation schemes i.e.: Some observations have size<given! 
+# I will remove the students with only one course completed.
+
+one_class_students <- Student_data %>%
+  dplyr::count(StudentID) %>%
+  filter(n <= 1)
+
+cat("Total Number of 1 course students to remove:\t")
+count(one_class_students)
+cat("\n\n")
+
 keep_StudentID <- Student_data %>%
   dplyr::count(StudentID) %>%
   filter(n > 1) %>%
@@ -193,7 +208,7 @@ ubcf_model
 # Using the UBCF recommendations 
 # Get recommender test set, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE}
 # note UBCF model is a lazy learner technic that must access all data in order to make a prediction
-n_recommended <- 10
+n_recommended <- 5
 ubcf_predicted <- predict(object = ubcf_model, newdata = rec_data_test, n = n_recommended)
 ubcf_list <- sapply(ubcf_predicted@items, function(x){colnames(model_data)[x]})
 
@@ -210,8 +225,8 @@ table(number_of_items)
 
 #### Create an evaluators scheme:
 
-items_to_keep <- 10
-rating_threshold <- 5
+items_to_keep <- 2 #max 2 error other wise
+rating_threshold <- 50
 n_fold <- 5
 eval_sets <- evaluationScheme(data = model_data, method = "cross-validation", train 
                               = percentage_training, given = items_to_keep, goodRating = rating_threshold, k = n_fold)
@@ -259,7 +274,7 @@ eval_accuracy
 #Using a precicion recall plot to predict accuracy with confusion matrix for known test set  
 
 ##```{r Use prediction recall to predict accuarcy, message=FALSE, warning=FALSE, include=FALSE, paged.print=FALSE}
-results <- evaluate(x = eval_sets, method = model_to_evaluate, n = seq(10, 100, 10))   
+results <- evaluate(x = eval_sets, method = model_to_evaluate, n = seq(1,10,1))   
 
 #Evaluate the result with confusion matrix   
 
@@ -314,7 +329,7 @@ models
 #Determine the best UBCF results based on number of recommendations  
 
 ##```{r Get UBCF results, include=FALSE}
-n_recommendations <- c(1, 5, seq(10,100,10))
+n_recommendations <- c(1, 5, seq(1,30,3))
 list_results <- evaluate(x = eval_sets, method = models, n = n_recommendations)  
 
 ###```
@@ -355,7 +370,7 @@ models
 #Get IBCF model results 
 
 #```{r Get IBCF results, include=FALSE}
-n_recommendations <- c(1, 5, seq(10,100,10))
+n_recommendations <- c(1, 5, seq(1,10,1))
 list_results <- evaluate(x = eval_sets, method = models, n = n_recommendations)   
 
 #```
@@ -392,7 +407,7 @@ models
 #```
 
 #```{r Get Popular list results, include=FALSE}
-n_recommendations <- c(1, 5, seq(10,100,10))
+n_recommendations <- c(1, 5, seq(1,10,1))
 list_results <- evaluate(x = eval_sets, method = models, n = n_recommendations)
 #```
 
@@ -417,7 +432,7 @@ title("POPULAR Precision/recall")
   
   #```{r include=FALSE}
 models <- append(UBCF_pea_model, POP_model )
-n_recommendations <- c(1, 5, seq(10,100,10))
+n_recommendations <- c(1, 5, seq(1,10,1))
 list_results <- evaluate(x = eval_sets, method = models, n = n_recommendations)  
 
 #```
@@ -435,58 +450,4 @@ title("ROC curve")
 plot(list_results, "prec/rec",annotate = 1, legend= "bottomright")
 title("Precision/recall")   
 #```
-
-#It appears that POPULAR model is best visualy with UBCF_per_k_30 being extremly close.
-
-### Final Result with Validation dataset
-#Based on the previous models I have reviewed all being very close, I will Evaluate the validation set using the same evaluation process and report the results.  
-
-#```{r Initial view of Validation data, message=FALSE, warning=FALSE, include=FALSE, paged.print=FALSE}
-#Initial Analysis of Validation data:
-#Dimensions (rows/columns):
-dim(validation)
-#```
-#```{r Corner view of Validation data, message=FALSE, warning=FALSE, include=FALSE, paged.print=FALSE}
-corner(validation)  
-
-#```
-#```{r Summary of validation, echo=FALSE}
-cat("Total number of ratings in validation dataset:\t", nratings(val_data),"\n")
-cat("      Total Users to Movies in validation set:\t", dim(val_data), "\n")   
-#```
-
-#```{r echo=TRUE}
-items_to_keep <-30
-rating_threshold <- 4
-n_fold <- 5
-n_recommendations <- c(1, 5, seq(10,100,10))
-val_sets <- evaluationScheme(data = val_data, method = "cross-validation", train 
-                             = percentage_training, given = items_to_keep, goodRating = rating_threshold, k = n_fold)  
-#```
-
-#```{r Final UBCF Evaluation results, eval=FALSE, include=FALSE}
-UBCF_eval <- evaluate(x = val_sets, method = "UBCF", k = n_fold, type = "ratings")
-head(getConfusionMatrix(UBCF_eval)[[1]]) 
-#```
-
-#Final IBCF Evaluation results:  
-  #```{r include=FALSE}
-IBCF_eval <- evaluate(x = val_sets, method = "IBCF", k = n_fold, type = "ratings")
-head(getConfusionMatrix(IBCF_eval)[[1]])
-#```
-
-#Final POPULAR Evaluation results:  
-  #```{r Final POPULAR Evaluation results, echo=TRUE}
-POP_eval <- evaluate(x = val_sets, method = "POPULAR", n = n_recommendations, type = "ratings")
-head(getConfusionMatrix(POP_eval)[[1]])
-#```
-
-
-### Conclusion
-
-
-####References
-
-#Michael Hahsler (2019). recommenderlab: Lab for Developing and Testing Recommender Algorithms. R package version 0.2-4. https://github.com/mhahsler/recommenderlab
-
 
