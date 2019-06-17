@@ -3,8 +3,8 @@ title: "CYO-OTI Class Recommender"
 author: "Robert Lewis"
 date: "June 17, 2019"
 output:
-  pdf_document: default
   word_document: default
+  pdf_document: default
   html_document: default
 ---
 
@@ -36,10 +36,6 @@ library(data.table)
 library(useful)
 library(lubridate)
 library(recommenderlab)
-```
-
-```{r List of variables}
-
 ```
 
 ### Load data
@@ -200,6 +196,7 @@ The Distribution of Ratings shows we have different possible ratings from 70 to 
 This data is based on the students who completed courses which reqires a score of 70% or higher to complete, note the frequencies are all fair similiar.
 
 ```{r Normalized Distribution of Ratings, echo=TRUE }
+
 hist(getRatings(normalize(Students_3)),breaks = 100,main = "Normalized Distribution of Ratings")  
 
 ```
@@ -208,7 +205,6 @@ hist(getRatings(normalize(Students_3)),breaks = 100,main = "Normalized Distribut
 
 ```{r Visual image of distribution of first 500 Students}
 
-##```{r Visual image of distribution of first 500 users, echo=TRUE}
 image(Students_3[1:500,],main = "Visual image of distribution of first 500 students")  
 
 ```
@@ -216,8 +212,9 @@ image(Students_3[1:500,],main = "Visual image of distribution of first 500 stude
 *It appears the scores are evenly disriputed*
 
 ```{r Avg Ratings of Prepared data}
-##```{r Avg Ratings of Prepared data, eval=FALSE, include=FALSE}
+
 boxplot(rowMeans(Students_3),main = "Avg Ratings of Prepared data")  
+
 ```
 
 *No outliers appear to be found that may skew the results*
@@ -493,7 +490,7 @@ title("UBCF ROC curve")
 
 *Note: UBCF_pea_k_30 appears to be the best UBCF model with TPR closes to 0.7 and FPR less than 0.4*
 
-```{r echo=TRUE}
+```{r Plot UBCF Precision Recall, echo=TRUE}
 plot(list_results, "prec/rec",annotate = 1, legend= "bottomleft")
 title("UBCF Precision/recall")  
 
@@ -647,3 +644,4 @@ Goldberg D, Nichols D, Oki BM, Terry D (1992). “Using collaborative ﬁltering
 Michael Hahsler (2019). recommenderlab: Lab for Developing and Testing Recommender Algorithms. R package version 0.2-4. https://github.com/mhahsler/recommenderlab
 
 Suzanne Ekelund (2011), "ROC curves - what are they and how are they used?",  https://acutecaretesting.org/en/articles/roc-curves-what-are-they-and-how-are-they-used.
+
