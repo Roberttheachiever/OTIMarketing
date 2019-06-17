@@ -4,6 +4,7 @@ author: "Robert Lewis"
 date: "June 17, 2019"
 output:
   pdf_document: default
+  word_document: default
   html_document: default
 ---
 
@@ -636,10 +637,7 @@ Final POPULAR Evaluation results:
 POP_eval <- evaluate(x = eval_sets, method = "POPULAR", n = n_recommendations, type = "ratings")
 head(getConfusionMatrix(POP_eval)[[1]])
 ```
-
-### Conclusion
-The finding do show using the POPULAR model returns a lower RMSE of 10.740 than UBCF 10.4894 and IBCF 11.59713 with the dataset I used. The dataset that I used for this project was 10th the size of the actual data I have access to but was not authoried to use for this project as originally planned. Therefore the lack of records and knowing that RecommendLab works best with large sets of data my result were also lacking in apeal.
-
+The finding do show using the POPULAR model returns a lower RMSE 10.42442 with the dataset I used. The dataset that I used for this project was 10th the size of the actual data I have access to but was not authoried to use for this project as originally planned. Therefore the lack of records and knowing that RecommendLab works best with large sets of data my result were also lacking in apeal.
 
 ### References
 
@@ -648,4 +646,4 @@ Goldberg D, Nichols D, Oki BM, Terry D (1992). “Using collaborative ﬁltering
 
 Michael Hahsler (2019). recommenderlab: Lab for Developing and Testing Recommender Algorithms. R package version 0.2-4. https://github.com/mhahsler/recommenderlab
 
-Suzanne Ekelund (2011), "ROC curves - what are they and how are they used?",https://acutecaretesting.org/en/articles/roc-curves-what-are-they-and-how-are-they-used
+Suzanne Ekelund (2011), "ROC curves - what are they and how are they used?", https://acutecaretesting.org/en/articles/roc-curves-what-are-they-and-how-are-they-used.

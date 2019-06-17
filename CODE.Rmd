@@ -46,9 +46,9 @@ library(recommenderlab)
 ```{r Load Data, include=FALSE}
 
 if(!file.exists("OnlineStudentdata.csv")){
-    download.file("https://github.com/Roberttheachiever/OTIMarketing/raw/Harvard-CYO-Project/OnlineStudentData.csv", destfile = "OnlineStudentdata.csv")}
+    download.file("https://github.com/Roberttheachiever/OTIMarketing/raw/Harvard-CYO-Project/OnlineStudentData.csv", destfile = "OnlineStudentData.csv")}
   
-Student_data <- read.csv(file.path("OnlineStudentdata.csv"))  
+Student_data <- read.csv(file.path("OnlineStudentData.csv"))  
 
 ```
 
@@ -443,9 +443,9 @@ plot(results, annotate = TRUE, main = "UBCF - ROC Curve")
 
 ```
 
-ROC curves are used to choose the most appropriate cut-off for a test. The best cut-off has the highest true positive rate together with the lowest false positive rate. (Ekelund, 2011). Looking at the ratio of area above the curve compared to the area below the curve it appears model has almost failed.
+ROC curves are used in clinical biochemistry to choose the most appropriate cut-off for a test. The best cut-off has the highest true positive rate together with the lowest false positive rate. (Ekelund, 2011). Looking at the ratio of area above the curve compared to the area below the curve it appears model has almost failed.
 
-*At approx #4 the TPR/FPR is at its best*
+*At approx #6 the TPR/FPR is at its best*
 
 Plot UBCF Precision/recall to verify accuracy
 
@@ -455,7 +455,7 @@ plot(results, "prec/rec",annotate = 1, main = "UBCF - Precision/recall")
 
 ```
 
-*Note the precision/recall indicates 1 - 4 precision good to ok mean there is some predictability in the test.
+*Note the precision/recall also indicates being bad
 
 
 ### Fine Tuning of the UBCF models to get better results
@@ -535,7 +535,7 @@ title("IBCF ROC curve")
   
 ```{r plot IBCF Precision/recall, echo=TRUE}
 plot(list_results, "prec/rec",annotate = 1, legend= "bottomright")
-title("Precision/recall")   
+title("IBCF Precision/recall")   
 
 ```
 
@@ -638,7 +638,7 @@ head(getConfusionMatrix(POP_eval)[[1]])
 ```
 
 ### Conclusion
-The finding do show using the POPULAR model returns a lowest RMSE of 10.47024, second RMSE for UBCF was 10.4894 and finally IBCF RMSE as 10.50156 with the dataset I used. The dataset that I used for this project was 10th the size of the actual data I have access to but was not authoried to use for this project as originally planned. Therefore the lack of better result is due to the made up dataset and knowing that RecommendLab works best with large sets. 
+The finding do show using the POPULAR model returns a lower RMSE 10.42442 with the dataset I used. The dataset that I used for this project was 10th the size of the actual data I have access to but was not authoried to use for this project as originally planned. Therefore the lack of records and knowing that RecommendLab works best with large sets of data my result were also lacking in apeal.
 
 
 ### References
