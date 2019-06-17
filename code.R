@@ -274,7 +274,7 @@ eval_accuracy
 #Using a precicion recall plot to predict accuracy with confusion matrix for known test set  
 
 ##```{r Use prediction recall to predict accuarcy, message=FALSE, warning=FALSE, include=FALSE, paged.print=FALSE}
-results <- evaluate(x = eval_sets, method = model_to_evaluate, n = seq(1.10,1))   
+results <- evaluate(x = eval_sets, method = model_to_evaluate, n = seq(1,10,1))   
 
 #Evaluate the result with confusion matrix   
 
