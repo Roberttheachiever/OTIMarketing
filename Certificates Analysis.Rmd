@@ -1,7 +1,7 @@
 ---
-title: "CYO-OTI Class Recommender"
+title: "Certificate Analysis"
 author: "Robert Lewis"
-date: "June 13, 2019"
+date: "November 8, 2019"
 output:
   pdf_document: default
   html_document: default
@@ -16,34 +16,15 @@ knitr::opts_chunk$set(
 ```
 
 ### Project Introduction
-The purpose of this project (CYO) is to create recommending of classes for past users based on courses they have previously completed. I will be using a subset of modified data to protect the actual users infomation. I will use the recommenderlab for making my recommendation and use different models to identify the best model with the lowest error accuracy.  The idea is that given Student Course Completion data by many students for many classes and grades, one can recommend other classes not known to her or him from similiar grades (see, e.g., Goldberg, Nichols, Oki, and Terry 1992) 
+The purpose of this project review the current certificate program data to identify other new students that may be interested in the certificate program.
+
 
 ```{r load Libraries}
-requiredPackages = c('dplyr', 'stringr','tidyverse','caret','data.table','useful','lubridate','recommenderlab')
+requiredPackages = c('RODBC','dplyr', 'stringr','tidyverse','caret','data.table','useful','lubridate','recommenderlab')
 for(p in requiredPackages){
   if(!require(p,character.only = TRUE)) install.packages(p)
   library(p,character.only = TRUE)
 }
-
-#if(!require(dplyr)) install.packages("dplyr", repos = "http://cran.us.r-project.org")
-# if(!require(stringr)) install.packages("stringr", repos = "http://cran.us.r-project.org")
-# if(!require(tidyverse)) install.packages("tidyverse", repos = "http://cran.us.r-project.org")
-# if(!require(caret)) install.packages("caret", repos = "http://cran.us.r-project.org")
-# if(!require(data.table)) install.packages("data.table", repos = "http://cran.us.r-project.org")
-# if(!require(useful)) install.packages("useful", repos = "http://cran.us.r-project.org")
-# if(!require(lubridate)) install.packages("lubridate", repos = "http://cran.us.r-project.org")
-# if(!require(recommenderlab)) install.packages("recommenderlab", repos = "http://cran.us.r-project.org")
-# library(dplyr)
-# library(stringr)
-# library(tidyverse)
-# library(caret)
-# library(data.table)
-# library(useful)
-# library(lubridate)
-# library(recommenderlab)
-```
-
-```{r List of variables}
 
 ```
 
@@ -52,20 +33,41 @@ for(p in requiredPackages){
 ```{r Load Data, include=FALSE}
 
 dbconnection <- odbcDriverConnect("Driver=ODBC Driver 11 for SQL Server;Server=OTIDB.hscnet.hsc.usf.edu; Database=OTIDatabaseNewOutreach_V3.2.0_BESQL;Uid=; Pwd=; trusted_connection=yes")
-Student_data <- sqlQuery(dbconnection,paste("select * from tblCourseOnline;"))
+profCertsTrainers <- sqlQuery(dbconnection,paste("select TrainerID as t_id,ProfCertID,CertDate,Expires,IssueDate,ReCertifiedDate  from tblProfCertsTrainers;"))
+trainers <- sqlQuery(dbconnection,paste("select t_id, t_lname, t_fname, CertificateProgram, hide   from tbltrainer;"))
+certifications <- sqlQuery(dbconnection,paste("select * from ProfCerts;"))
+certificationRequirements <- sqlQuery(dbconnection,paste("select * from ProfCertRequirements;"))
+courseNames <- sqlQuery(dbconnection,paste("select id, CourseNumberText,credits from tblCourseNames;"))
 odbcClose(dbconnection)
 
-# if(!file.exists("OnlineStudentdata.csv")){
-#     download.file("https://github.com/Roberttheachiever/OTIMarketing/raw/Harvard-CYO-Project/OnlineStudentData.csv", destfile = "OnlineStudentData.csv")}
-#   
-# Student_data <- read.csv(file.path("OnlineStudentData.csv"))  
+
+# str(ProfCertsTrainers)
+# str(trainers)
+# str(certifications)
+# str(certificationRequirements)
+# str(courseNames)
 
 ```
 
-### Review structure and details of dataset  
+### Review structure and details of datasets  
 
 ```{r Review structure and details of dataset  }
+unique_TrainerIDs <-unique(profCertsTrainers$t_id)
+length(unique_TrainerIDs)
 
+```
+Join Tables
+
+```{r Join tables}
+# setkey(profCertsTrainers,t_id)
+# setkey(trainers,t_id)
+
+Certified_Trainers <- left_join(profCertsTrainers, trainers, by = "t_id")
+glimpse(Certified_Trainers)
+
+```
+
+```{r Review structure  }
 cat("Total Number of Courses Completed:", nrow(Student_data),"\n\n" ) 
 unique_studentIds<-unique(Student_data$StudentID)
 cat("Total number of Students:", length(unique_studentIds),"\n\n" )
